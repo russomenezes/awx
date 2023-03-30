@@ -1,0 +1,30 @@
+---
+- name: Update all Linux systems
+  hosts: all
+  become: true
+  vars:
+    - pkg_mgr:
+        - apt: update_cache=yes upgrade=yes
+        - dnf: update_cache=yes upgrade=yes
+        - yum: update_cache=yes upgrade=yes
+
+  tasks:
+    - name: Update package manager cache
+      package_facts:
+
+    - name: Update all packages
+      package:
+        name: '*'
+        state: latest
+      loop: "{{ pkg_mgr }}"
+      loop_control:
+        loop_var: pkgmgr
+        label: "{{ pkgmgr.keys() | first }}"
+      when: pkgmgr.keys() | first in ansible_pkg_mgr
+
+    - name: Restart server
+      reboot:
+        reboot_timeout: 300
+        msg: "Reboot initiated by Ansible."
+        pre_reboot_delay: 5
+      when: reboot_required | success
