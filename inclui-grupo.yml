@@ -1,0 +1,57 @@
+---
+- name: Backup and update sssd.conf file
+  hosts: all
+  become: true
+  tasks:
+    - name: Backup sssd.conf file with timestamp
+      copy:
+        src: /etc/sssd/sssd.conf
+        dest: /etc/sssd/sssd.conf-$(date +%F-:%H:%M:%S)
+      register: sssd_conf_backup
+
+    - name: Check if CofreAWS_Infra_admlocal group exists
+      shell: getent group CofreAWS_Infra_admlocal
+      register: group_check
+      ignore_errors: true
+
+    - name: Check if sssd.conf file exists
+      stat:
+        path: /etc/sssd/sssd.conf
+      register: sssd_conf_check
+
+    - name: Add CofreAWS_Infra_admlocal group to sssd.conf file
+      block:
+        - name: Check if simple_allow_groups line exists in sssd.conf file
+          shell: grep -q "simple_allow_groups" "/etc/sssd/sssd.conf"
+          register: simple_allow_groups_check
+
+        - name: Add simple_allow_groups line and CofreAWS_Infra_admlocal group to sssd.conf file
+          lineinfile:
+            path: /etc/sssd/sssd.conf
+            line: "simple_allow_groups = Domain Admins,CofreAWS_Infra_admlocal"
+          when: not simple_allow_groups_check.rc and group_check.rc == 1
+
+        - name: Add CofreAWS_Infra_admlocal group to simple_allow_groups line in sssd.conf file
+          lineinfile:
+            path: /etc/sssd/sssd.conf
+            regexp: "^simple_allow_groups =.*"
+            line: "simple_allow_groups = \\0,CofreAWS_Infra_admlocal"
+          when: simple_allow_groups_check.rc == 0 and not "CofreAWS_Infra_admlocal" in simple_allow_groups_check.stdout and group_check.rc == 1
+
+        - name: Check if CofreAWS_Infra_admlocal group is already in simple_allow_groups line in sssd.conf file
+          shell: grep -q "simple_allow_groups.*Domain Admins.*,.*CofreAWS_Infra_admlocal.*" "/etc/sssd/sssd.conf"
+          register: group_exists_check
+          when: simple_allow_groups_check.rc == 0 and not group_check.rc == 0
+
+        - name: Add CofreAWS_Infra_admlocal group to simple_allow_groups line after Domain Admins group in sssd.conf file
+          lineinfile:
+            path: /etc/sssd/sssd.conf
+            regexp: "simple_allow_groups.*Domain Admins.*"
+            line: "simple_allow_groups = \\0,CofreAWS_Infra_admlocal"
+          when: simple_allow_groups_check.rc == 0 and not group_exists_check.rc == 0 and group_check.rc == 1
+
+        - name: Restart sssd service
+          service:
+            name: sssd.service
+            state: restarted
+      when: sssd_conf
