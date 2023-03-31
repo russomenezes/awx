@@ -1,0 +1,8 @@
+- name: Atualiza todos os pacotes do sistema
+  hosts: all
+  become: true
+  tasks:
+    - name: Atualiza pacotes
+      package:
+        name: "*"
+        state: latest
