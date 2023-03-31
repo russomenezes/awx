@@ -1,0 +1,41 @@
+---
+- name: Faz backup do arquivo sssd.conf
+  command:
+    cmd: "cp /etc/sssd/sssd.conf /etc/sssd/sssd.conf-$(date +'%F-:%H:%M:%S')"
+  register: backup_result
+
+- name: Verifica se o grupo CofreAWS_Infra_admlocal existe
+  command: getent group CofreAWS_Infra_admlocal
+  register: group_check
+  ignore_errors: yes
+
+- name: Verifica se o arquivo sssd.conf existe
+  stat:
+    path: /etc/sssd/sssd.conf
+  register: file_check
+
+- name: Adiciona o grupo CofreAWS_Infra_admlocal ao sssd.conf
+  block:
+    - name: Adiciona o grupo diretamente
+      replace:
+        path: /etc/sssd/sssd.conf
+        regexp: '^simple_allow_groups =\s*$'
+        replace: 'simple_allow_groups = CofreAWS_Infra_admlocal'
+      when: "'simple_allow_groups' in file_check.stat.content"
+    - name: Adiciona o grupo após 'Domain Admins'
+      replace:
+        path: /etc/sssd/sssd.conf
+        regexp: 'simple_allow_groups = (.*)Domain Admins(.*)'
+        replace: 'simple_allow_groups = \g<1>Domain Admins,\g<2>CofreAWS_Infra_admlocal'
+      when: "'simple_allow_groups' in file_check.stat.content and 'CofreAWS_Infra_admlocal' not in file_check.stat.content"
+    - name: Adiciona a linha 'simple_allow_groups'
+      lineinfile:
+        path: /etc/sssd/sssd.conf
+        line: 'simple_allow_groups = Domain Admins,CofreAWS_Infra_admlocal'
+      when: "'simple_allow_groups' not in file_check.stat.content"
+
+- name: Reinicia o serviço sssd
+  systemd:
+    name: sssd.service
+    state: restarted
+  when: backup_result.rc == 0 and group_check.rc != 0 and file_check.stat.exists == True
