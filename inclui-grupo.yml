@@ -1,0 +1,53 @@
+---
+- name: Adicionar grupo CofreAWS_Infra_admlocal no sssd.conf
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Fazer backup do sssd.conf
+      shell: cp /etc/sssd/sssd.conf /etc/sssd/sssd.conf-$(date +%F-:%H:%M:%S)
+    - name: Verificar se o grupo CofreAWS_Infra_admlocal existe
+      shell: |
+        if getent group CofreAWS_Infra_admlocal > /dev/null; then
+          echo "O grupo CofreAWS_Infra_admlocal já existe."
+          exit 1
+        fi
+      register: group_check
+      ignore_errors: yes
+    - name: Verificar se o arquivo sssd.conf existe
+      stat:
+        path: /etc/sssd/sssd.conf
+      register: sssd_conf_check
+    - name: Adicionar grupo CofreAWS_Infra_admlocal no sssd.conf
+      block:
+        - name: Verificar se já existe a linha que contém "simple_allow_groups"
+          shell: |
+            if grep -q "simple_allow_groups" "/etc/sssd/sssd.conf"; then
+              # verifica se o grupo CofreAWS_Infra_admlocal já está na lista
+              if grep -q "simple_allow_groups.*Domain Admins.*,.*CofreAWS_Infra_admlocal.*" "/etc/sssd/sssd.conf"; then
+                echo "O grupo CofreAWS_Infra_admlocal já está na lista."
+                exit 1
+              fi
+              # verifica se a linha está vazia
+              if grep -q "^simple_allow_groups =\s*$" "/etc/sssd/sssd.conf"; then
+                # adiciona o novo grupo diretamente
+                sed -i 's/^simple_allow_groups =\s*$/simple_allow_groups = CofreAWS_Infra_admlocal/' "/etc/sssd/sssd.conf"
+              else
+                # adiciona o novo grupo após "Domain Admins"
+                sed -i 's/simple_allow_groups = \(.*Domain Admins.*\)$/\0,CofreAWS_Infra_admlocal/' "/etc/sssd/sssd.conf"
+              fi
+              echo "O grupo CofreAWS_Infra_admlocal adicionado com sucesso!"
+            else
+              # adiciona a linha "simple_allow_groups" e os grupos permitidos
+              echo "simple_allow_groups = Domain Admins,CofreAWS_Infra_admlocal" >> "/etc/sssd/sssd.conf"
+              echo "O grupo adicionado com sucesso!"
+            fi
+        when: sssd_conf_check.stat.exists
+      rescue:
+        - name: Arquivo sssd.conf não encontrado
+          fail:
+            msg: "O arquivo /etc/sssd/sssd.conf não existe."
+    - name: Reiniciar o serviço sssd
+      systemd:
+        name: sssd.service
+        state: restarted
+      when: group_check.rc == 0
