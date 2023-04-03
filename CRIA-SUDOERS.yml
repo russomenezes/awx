@@ -1,0 +1,28 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Executar script shell
+      shell: |
+        #!/bin/bash
+        #---------------------------------------------------------------------
+        #script shell que cria o arquivo sudoers no caminho /etc/sudoers.d/
+        #com as informações desejadas e permissão 440:
+        #----------------------------------------------------------------------
+
+        # Define o caminho e o nome do arquivo sudoers
+        SUDOERS_FILE="/etc/sudoers.d/cofreAWSInfraadmlocal"
+
+        # Define as informações que serão adicionadas ao arquivo sudoers
+        SUDOERS_INFO="CofreAWS_Infra_admlocal@grupo.qualicorp ALL=(ALL:ALL) NOPASSWD:ALL\nCofreAWS_Infra_admlocal ALL=(ALL:ALL) NOPASSWD:ALL"
+
+        # Verifica se o arquivo já existe antes de criar
+        if test -e "$SUDOERS_FILE"; then
+            echo "O arquivo $SUDOERS_FILE já existe."
+        else
+            # Cria o arquivo sudoers com as informações definidas acima
+            echo -e "$SUDOERS_INFO" > "$SUDOERS_FILE"
+            # Define as permissões do arquivo sudoers para 440
+            sudo chmod 440 "$SUDOERS_FILE"
+            echo "O arquivo $SUDOERS_FILE foi criado com sucesso."
+        fi
