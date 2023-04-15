@@ -1,0 +1,61 @@
+- name: Executar script yara e copiar arquivo vulnerabilidade.txt para servidor remoto
+  hosts: all
+  become: yes
+  tasks:
+    - name: Executar script yara
+      shell: |
+        #!/bin/bash
+
+        # Verifica se o yara está instalado e instala caso não esteja
+        if ! command -v yara &> /dev/null
+        then
+            echo "Yara não encontrado. Instalando..."
+            sudo yum install -y yara
+        fi
+
+        # Verifica se o diretório /etc/yara/servers existe, caso contrário cria
+        if [ ! -d "/etc/yara/servers" ]
+        then
+            echo "Diretório /etc/yara/servers não encontrado. Criando..."
+            sudo mkdir /etc/yara/servers
+        fi
+
+        # Cria o arquivo cpf_detection.yar caso não exista
+        if [ ! -f "/etc/yara/servers/cpf_detection.yar" ]
+        then
+            echo "Arquivo /etc/yara/servers/cpf_detection.yar não encontrado. Criando..."
+            sudo tee /etc/yara/servers/cpf_detection.yar > /dev/null <<EOT
+        rule cpf_detection {
+            strings:
+                $cpf_pattern = /([0-9]{3}\.){2}[0-9]{3}-[0-9]{2}/
+            condition:
+                $cpf_pattern
+        }
+
+        EOT
+        fi
+
+        # Executa o comando yara e gera o log vulnerabilidade.txt
+        sudo yara -w -r /etc/yara/servers/cpf_detection.yar /home/cesar > vulnerabilidade.txt
+
+        # Aguarda 3 segundos
+        sleep 3
+
+    - name: Copiar arquivo vulnerabilidade.txt para servidor remoto
+      copy:
+        src: vulnerabilidade.txt
+        dest: /var/yara/analises/
+      delegate_to: 192.168.18.88
+      become: yes
+      become_user: cesar
+
+    - name: Executar script yara
+      shell: |
+        # Remove os arquivos criados
+        sudo rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
+
+
+#Nesse exemplo, utilizamos o módulo copy do Ansible para copiar o arquivo vulnerabilidade.txt 
+#para o servidor remoto, especificando o endereço IP do servidor no parâmetro delegate_to e o 
+#usuário a ser utilizado no parâmetro become_user. Dessa forma, 
+#as credenciais cadastradas no AWX serão utilizadas na execução da tarefa.
