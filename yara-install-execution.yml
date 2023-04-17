@@ -10,32 +10,34 @@
         if ! command -v yara &> /dev/null
         then
             echo "Yara não encontrado. Instalando..."
-            sudo yum install -y yara
+             yum install -y yara
         fi
 
         # Verifica se o diretório /etc/yara/servers existe, caso contrário cria
         if [ ! -d "/etc/yara/servers" ]
         then
             echo "Diretório /etc/yara/servers não encontrado. Criando..."
-            sudo mkdir /etc/yara/servers
+             mkdir /etc/yara/servers
         fi
 
         # Cria o arquivo cpf_detection.yar caso não exista
         if [ ! -f "/etc/yara/servers/cpf_detection.yar" ]
         then
             echo "Arquivo /etc/yara/servers/cpf_detection.yar não encontrado. Criando..."
-            sudo tee /etc/yara/servers/cpf_detection.yar > /dev/null <<EOT
+             tee /etc/yara/servers/cpf_detection.yar > /dev/null <<EOT
         rule cpf_detection {
             strings:
                 $cpf_pattern = /([0-9]{3}\.){2}[0-9]{3}-[0-9]{2}/
             condition:
                 $cpf_pattern
         }
+
+
         EOT
         fi
 
         # Executa o comando yara e gera o log vulnerabilidade.txt
-        sudo yara -w -r /etc/yara/servers/cpf_detection.yar /home/cesar > /tmp/vulnerabilidade.txt
+         yara -w -r /etc/yara/servers/cpf_detection.yar /home/cesar > vulnerabilidade.txt
 
         # Aguarda 3 segundos
         sleep 3
@@ -44,4 +46,4 @@
         scp /tmp/vulnerabilidade.txt cesar@192.168.18.88:/var/yara/analises/
 
         # Remove os arquivos criados
-        ##sudo rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
+        # rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
