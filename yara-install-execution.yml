@@ -48,8 +48,11 @@
       delegate_to: 192.168.18.88
       become: yes
       become_user: cesar
+      # Cria o caminho /var/yara/analises/ caso ele não exista
+      remote_src: yes
+      validate: /usr/bin/test -d /var/yara/analises/
 
-    - name: Executar script yara
+    - name: Remover arquivos criados pelo script yara
       shell: |
         # Remove os arquivos criados
         sudo rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
