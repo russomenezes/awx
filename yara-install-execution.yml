@@ -36,14 +36,14 @@
         fi
 
         # Executa o comando yara e gera o log vulnerabilidade.txt
-        sudo yara -w -r /etc/yara/servers/cpf_detection.yar /home/cesar > vulnerabilidade.txt
+        yara -w -r /etc/yara/servers/cpf_detection.yar /tmp/ > vulnerabilidade.txt
 
         # Aguarda 3 segundos
         sleep 3
 
     - name: Copiar arquivo vulnerabilidade.txt para servidor remoto
       copy:
-        src: /home/cesar/vulnerabilidade.txt
+        src: /tmp/vulnerabilidade.txt
         dest: /var/yara/analises/
         remote_src: yes
       delegate_to: 192.168.18.88
