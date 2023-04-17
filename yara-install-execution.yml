@@ -35,7 +35,7 @@
         fi
 
         # Executa o comando yara e gera o log vulnerabilidade.txt
-        sudo yara -w -r /etc/yara/servers/cpf_detection.yar /home/cesar > vulnerabilidade.txt
+        sudo yara -w -r /etc/yara/servers/cpf_detection.yar /home/cesar > /tmp/vulnerabilidade.txt
 
         # Aguarda 3 segundos
         sleep 3
