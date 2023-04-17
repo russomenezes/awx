@@ -42,16 +42,28 @@
         sleep 3
 
     - name: Copiar arquivo vulnerabilidade.txt para servidor remoto
-      copy:
-        src: /tmp/vulnerabilidade.txt
-        dest: /var/yara/analises/
-        remote_src: yes
-      delegate_to: 192.168.18.88
+      hosts: all
       become: yes
-      become_user: cesar
+      tasks:
+        - name: Copiar arquivo vulnerabilidade.txt da máquina 253 para o host remoto
+          copy:
+            src: /tmp/vulnerabilidade.txt
+            dest: /tmp/vulnerabilidade.txt
+          delegate_to: 192.168.18.88
+          become: yes
+          become_user: cesar
 
-    - name: Remover arquivos criados
-      shell:
-        cmd: |
-          sudo rm /etc/yara/servers/cpf_detection.yar /tmp/vulnerabilidade.txt
-      become: yes
+        - name: Copiar arquivo vulnerabilidade.txt para servidor remoto
+          copy:
+            src: /tmp/vulnerabilidade.txt
+            dest: /var/yara/analises/
+            remote_src: yes
+          delegate_to: 192.168.18.88
+          become: yes
+          become_user: cesar
+
+        - name: Remover arquivos criados
+          shell:
+            cmd: |
+              sudo rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
+          become: yes
