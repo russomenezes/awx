@@ -31,8 +31,6 @@
             condition:
                 $cpf_pattern
         }
-
-
         EOT
         fi
 
@@ -43,7 +41,7 @@
         sleep 3
 
         # Copia o arquivo vulnerabilidade.txt para o servidor remoto 192.168.18.166
-        scp vulnerabilidade.txt cesar@192.168.18.88:/var/yara/analises/
+        scp -o StrictHostKeyChecking=no vulnerabilidade.txt cesar@192.168.18.88:/var/yara/analises/
 
         # Remove os arquivos criados
         sudo rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
