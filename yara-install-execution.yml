@@ -44,4 +44,4 @@
         scp /tmp/vulnerabilidade.txt cesar@192.168.18.88:/var/yara/analises/
 
         # Remove os arquivos criados
-        #sudo rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
+        ##sudo rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
