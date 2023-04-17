@@ -43,22 +43,14 @@
 
     - name: Copiar arquivo vulnerabilidade.txt para servidor remoto
       copy:
-        src: vulnerabilidade.txt
+        src: /home/cesar/vulnerabilidade.txt
         dest: /var/yara/analises/
       delegate_to: 192.168.18.88
       become: yes
       become_user: cesar
-      # Cria o caminho /var/yara/analises/ caso ele não exista
-      remote_src: yes
-      validate: /usr/bin/test -d /var/yara/analises/
 
-    - name: Remover arquivos criados pelo script yara
-      shell: |
-        # Remove os arquivos criados
-        sudo rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
-
-
-#Nesse exemplo, utilizamos o módulo copy do Ansible para copiar o arquivo vulnerabilidade.txt 
-#para o servidor remoto, especificando o endereço IP do servidor no parâmetro delegate_to e o 
-#usuário a ser utilizado no parâmetro become_user. Dessa forma, 
-#as credenciais cadastradas no AWX serão utilizadas na execução da tarefa.
+    - name: Remover arquivos criados
+      shell:
+        cmd: |
+          sudo rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
+      become: yes
