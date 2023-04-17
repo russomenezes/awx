@@ -36,7 +36,7 @@
         fi
 
         # Executa o comando yara e gera o log vulnerabilidade.txt
-        yara -w -r /etc/yara/servers/cpf_detection.yar /tmp/ > vulnerabilidade.txt
+        yara -w -r /etc/yara/servers/cpf_detection.yar /tmp/ > /tmp/vulnerabilidade.txt
 
         # Aguarda 3 segundos
         sleep 3
@@ -45,14 +45,13 @@
       copy:
         src: /tmp/vulnerabilidade.txt
         dest: /var/yara/analises/
+        remote_src: yes
       delegate_to: 192.168.18.88
       become: yes
       become_user: cesar
 
-
-
     - name: Remover arquivos criados
       shell:
         cmd: |
-          sudo rm /etc/yara/servers/cpf_detection.yar vulnerabilidade.txt
+          sudo rm /etc/yara/servers/cpf_detection.yar /tmp/vulnerabilidade.txt
       become: yes
