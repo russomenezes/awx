@@ -1,0 +1,29 @@
+---
+- name: Ping Servers
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Ping Server 1
+      ping:
+      register: result_server1
+
+    - name: Display Result Server 1
+      debug:
+        msg: "Ping result for Server 1: {{ result_server1 }}"
+
+    - name: Ping Server 2
+      ping:
+      register: result_server2
+
+    - name: Display Result Server 2
+      debug:
+        msg: "Ping result for Server 2: {{ result_server2 }}"
+
+    - name: Ping Server 3
+      ping:
+      register: result_server3
+
+    - name: Display Result Server 3
+      debug:
+        msg: "Ping result for Server 3: {{ result_server3 }}"
