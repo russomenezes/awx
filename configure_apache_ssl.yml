@@ -1,0 +1,26 @@
+---
+- name: Criar arquivo de configuração SSL no /tmp
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Criar arquivo de configuração SSL na pasta /tmp
+      copy:
+        dest: /tmp/ssl.conf
+        content: |
+          <VirtualHost *:443>
+              ServerName www.awx.codevasf.gov.br
+              DocumentRoot /var/www/html
+
+              SSLEngine on
+              SSLCertificateFile /tmp/ssl_cert.pem
+              SSLCertificateKeyFile /tmp/ssl_key.pem
+
+              <Directory /var/www/html>
+                  AllowOverride All
+                  Require all granted
+              </Directory>
+
+              ErrorLog /var/log/httpd/ssl_error.log
+              CustomLog /var/log/httpd/ssl_access.log combined
+          </VirtualHost>
+        mode: '0644'
