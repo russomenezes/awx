@@ -1,29 +1,30 @@
----
-- name: Ping Servers
+- name: Criar arquivo de configuração SSL no /tmp
   hosts: localhost
-  gather_facts: false
-
   tasks:
-    - name: Ping Server 1
-      ping:
-      register: result_server1
+    - name: Criar diretório para certificados SSL na pasta /tmp
+      file:
+        path: /tmp
+        state: directory
+        mode: '0755'
 
-    - name: Display Result Server 1
-      debug:
-        msg: "Ping result for Server 1: {{ result_server1 }}"
+    - name: Criar arquivo de configuração SSL na pasta /tmp
+      copy:
+        dest: /tmp/ssl.conf
+        content: |
+          <VirtualHost *:443>
+              ServerName www.awx.codevasf.gov.br
+              DocumentRoot /var/www/html
 
-    - name: Ping Server 2
-      ping:
-      register: result_server2
+              SSLEngine on
+              SSLCertificateFile /tmp/ssl_cert.pem
+              SSLCertificateKeyFile /tmp/ssl_key.pem
 
-    - name: Display Result Server 2
-      debug:
-        msg: "Ping result for Server 2: {{ result_server2 }}"
+              <Directory /var/www/html>
+                  AllowOverride All
+                  Require all granted
+              </Directory>
 
-    - name: Ping Server 3
-      ping:
-      register: result_server3
-
-    - name: Display Result Server 3
-      debug:
-        msg: "Ping result for Server 3: {{ result_server3 }}"
+              ErrorLog /var/log/httpd/ssl_error.log
+              CustomLog /var/log/httpd/ssl_access.log combined
+          </VirtualHost>
+        mode: '0644'
