@@ -1,30 +1,11 @@
-- name: Criar arquivo de configuração SSL no /tmp
-  hosts: localhost
+---
+- name: Testar conectividade com 8.8.8.8
+  hosts: all
   tasks:
-    - name: Criar diretório para certificados SSL na pasta /tmp
-      file:
-        path: /tmp
-        state: directory
-        mode: '0755'
+    - name: Executar 20 pings para 8.8.8.8
+      command: ping -c 20 8.8.8.8
+      register: ping_result
 
-    - name: Criar arquivo de configuração SSL na pasta /tmp
-      copy:
-        dest: /tmp/ssl.conf
-        content: |
-          <VirtualHost *:443>
-              ServerName www.awx.codevasf.gov.br
-              DocumentRoot /var/www/html
-
-              SSLEngine on
-              SSLCertificateFile /tmp/ssl_cert.pem
-              SSLCertificateKeyFile /tmp/ssl_key.pem
-
-              <Directory /var/www/html>
-                  AllowOverride All
-                  Require all granted
-              </Directory>
-
-              ErrorLog /var/log/httpd/ssl_error.log
-              CustomLog /var/log/httpd/ssl_access.log combined
-          </VirtualHost>
-        mode: '0644'
+    - name: Mostrar o resultado do ping
+      debug:
+        msg: "{{ ping_result.stdout }}"
