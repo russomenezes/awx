@@ -1,0 +1,11 @@
+---
+- name: Testar conectividade com 8.8.8.8 em Windows
+  hosts: all
+  tasks:
+    - name: Executar 20 pings para 8.8.8.8
+      win_command: ping -n 20 8.8.8.8
+      register: ping_result
+
+    - name: Mostrar o resultado do ping
+      debug:
+        msg: "{{ ping_result.stdout }}"
