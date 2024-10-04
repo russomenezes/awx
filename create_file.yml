@@ -1,0 +1,9 @@
+---
+- name: Criar um arquivo de teste no diretório /tmp em um host Linux
+  hosts: all  # Defina como "all" para aplicar a todos os hosts no inventário
+  become: true  # Elevar privilégios para ter acesso ao /tmp
+  tasks:
+    - name: Criar um arquivo chamado awx-teste.txt em /tmp
+      copy:
+        content: "Arquivo de teste criado pelo Ansible AWX\n"
+        dest: /tmp/awx-teste.txt
