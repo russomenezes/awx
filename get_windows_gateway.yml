@@ -3,7 +3,7 @@
   hosts: all
   become: false
   vars:
-    ansible_remote_tmp: "C:/Temp/ansible"  # Definir o diretório temporário
+    ansible_remote_tmp: "C:\Temp\ansible"  # Definir o diretório temporário
   tasks:
     - name: Executar comando para identificar o gateway
       win_shell: Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.DefaultGateway -ne $null } | Select-Object -Property InterfaceAlias,IPAddress,DefaultGateway
