@@ -1,0 +1,14 @@
+---
+- name: Criar um arquivo no Windows com conteúdo específico
+  hosts: all
+  become: false
+  tasks:
+    - name: Criar diretório temporário se não existir
+      win_file:
+        path: C:\Temp
+        state: directory
+
+    - name: Criar um arquivo com o conteúdo "Carlos Magno"
+      win_copy:
+        content: "Carlos Magno"
+        dest: C:\Temp\mensagem.txt
