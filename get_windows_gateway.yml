@@ -6,7 +6,7 @@
     ansible_remote_tmp: "C:/Temp"  # Definir o diretório temporário
   tasks:
     - name: Executar comando para identificar o gateway
-      win_shell: Get-NetIPAddress -AddressFamily IPv4 
+      win_shell: (Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -ne $null }).IPv4DefaultGateway |select nexthop
       register: gateway_info
 
     - name: Exibir informações do gateway
