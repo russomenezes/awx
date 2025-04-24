@@ -1,8 +1,56 @@
-- name: Atualiza todos os pacotes do sistema
+---
+- name: Atualiza, reinicia e gerencia serviços por grupo
   hosts: all
   become: true
+  vars:
+    servicos_por_grupo:
+      db_servers:
+        - postgresql-13.service
+      zabbix_servers:
+        - zabbix-server.service
+        - zabbix-agent
+      infra_servers:
+        - httpd
+        - sssd
+        - sshd
+
   tasks:
-    - name: Atualiza pacotes
-      package:
+    - name: Atualiza pacotes do sistema
+      dnf:
         name: "*"
         state: latest
+      register: atualizacao
+
+    - name: Define flag de reboot se houve atualizações
+      set_fact:
+        reboot_necessario: true
+      when: atualizacao.changed
+
+    - name: Reinicia o sistema se necessário
+      reboot:
+        msg: "Reiniciando após atualização de pacotes"
+        reboot_timeout: 600
+        post_reboot_delay: 30
+      when: reboot_necessario is defined and reboot_necessario
+
+    - name: Aguarda o host voltar após o reboot
+      wait_for_connection:
+        timeout: 300
+      when: reboot_necessario is defined and reboot_necessario
+
+    - name: Coleta informações sobre serviços
+      service_facts:
+
+    - name: Identifica grupo do host
+      set_fact:
+        item_grupo: "{{ group_names | select('match', '^(db_servers|zabbix_servers|infra_servers)$') | list | first }}"
+      when: item_grupo is not defined
+
+    - name: Inicia serviços se estiverem parados ou com falha
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop: "{{ servicos_por_grupo[item_grupo] }}"
+      when: >
+        ansible_facts.services[item].state in ['stopped', 'failed']
