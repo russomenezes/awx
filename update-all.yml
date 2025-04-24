@@ -1,18 +1,15 @@
 ---
-- name: Atualiza, reinicia e gerencia serviços por grupo
+- name: Atualiza, reinicia e verifica serviços em qualquer host
   hosts: all
   become: true
   vars:
-    servicos_por_grupo:
-      db_servers:
-        - postgresql-13.service
-      zabbix_servers:
-        - zabbix-server.service
-        - zabbix-agent
-      infra_servers:
-        - httpd
-        - sssd
-        - sshd
+    servicos_criticos:
+      - postgresql-13.service
+      - zabbix-server.service
+      - zabbix-agent
+      - httpd
+      - sssd
+      - sshd
 
   tasks:
     - name: Atualiza pacotes do sistema
@@ -38,19 +35,15 @@
         timeout: 300
       when: reboot_necessario is defined and reboot_necessario
 
-    - name: Coleta informações sobre serviços
+    - name: Coleta informações sobre todos os serviços
       service_facts:
 
-    - name: Identifica grupo do host
-      set_fact:
-        item_grupo: "{{ group_names | select('match', '^(db_servers|zabbix_servers|infra_servers)$') | list | first }}"
-      when: item_grupo is not defined
-
-    - name: Inicia serviços se estiverem parados ou com falha
+    - name: Inicia serviços se estiverem parados ou falharam
       systemd:
         name: "{{ item }}"
         state: started
         enabled: true
-      loop: "{{ servicos_por_grupo[item_grupo] }}"
+      loop: "{{ servicos_criticos }}"
       when: >
+        ansible_facts.services[item] is defined and
         ansible_facts.services[item].state in ['stopped', 'failed']
